@@ -1,0 +1,559 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>10x10 Grid with Numbers</title>
+    <style>
+        body {
+            background-color: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            height: 100vh;
+            margin: 0;
+            font-family: sans-serif;
+        }
+
+        #grid-container {
+            display: grid;
+            grid-template-columns: repeat(10, 40px); 
+            grid-template-rows: repeat(10, 40px);
+            border: 2px solid white;
+        }
+
+        .cell {
+            width: 40px;
+            height: 40px;
+            border: 1px solid white;
+            box-sizing: border-box;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1 style="color: white; text-align: center; margin-bottom: 50px;">Rotated Modulo Game</h1>
+    <div id="grid-container"></div>
+
+    <script>
+        class Position {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+            }
+            moveLeft()  { if (this.x > 0) this.x -= 1; }
+            moveRight() { if (this.x < 9) this.x += 1; }
+            moveUp()    { if (this.y > 0) this.y -= 1; }
+            moveDown()  { if (this.y < 9) this.y += 1; }
+            getCurrentCellId() { return `cell-${this.y * 10 + this.x}`; }
+            getIndex() { return this.y * 10 + this.x; }
+        }
+
+        class Cube {
+            constructor() {
+                this.faceLeft = 0; this.faceBehind = 1; this.faceRight = 2;
+                this.faceFront = 3; this.faceUp = 4; this.faceDown = 5;
+            }
+            rotateLeft() {
+                const temp = this.faceLeft;
+                this.faceLeft = this.faceFront; this.faceFront = this.faceRight;
+                this.faceRight = this.faceBehind; this.faceBehind = temp;
+            }
+            rotateRight() {
+                const temp = this.faceRight;
+                this.faceRight = this.faceFront; this.faceFront = this.faceLeft;
+                this.faceLeft = this.faceBehind; this.faceBehind = temp;
+            }
+            rotateUp() {
+                const temp = this.faceUp;
+                this.faceUp = this.faceFront; this.faceFront = this.faceDown;
+                this.faceDown = this.faceBehind; this.faceBehind = temp;
+            }
+            rotateDown() {
+                const temp = this.faceDown;
+                this.faceDown = this.faceFront; this.faceFront = this.faceUp;
+                this.faceUp = this.faceBehind; this.faceBehind = temp;
+            }
+        }
+
+        const currentPosition = new Position(0, 0);
+        const cube = new Cube();
+        const lockedCells = new Set(); // Track cells that are permanently '0'
+        const container = document.getElementById('grid-container');
+
+        // Initial Grid Creation
+        for (let i = 0; i < 100; i++) {
+            const cell = document.createElement('div');
+            cell.classList.add('cell');
+            cell.id = `cell-${i}`; 
+            cell.textContent = i;
+            container.appendChild(cell);
+        }
+
+        // Highlight starting position
+        updateDisplay();
+
+        document.addEventListener('keydown', function(event) {
+            const oldIndex = currentPosition.getIndex();
+            const oldCell = document.getElementById(`cell-${oldIndex}`);
+
+            // 1. Reset OLD cell appearance
+            if (lockedCells.has(oldIndex)) {
+                oldCell.style.backgroundColor = 'green';
+                oldCell.textContent = '0';
+            } else {
+                oldCell.style.backgroundColor = 'black';
+                oldCell.textContent = oldIndex;
+            }
+
+            // 2. Process Movement
+            switch (event.key) {
+                case 'ArrowLeft':  currentPosition.moveLeft();  cube.rotateLeft();  break;
+                case 'ArrowRight': currentPosition.moveRight(); cube.rotateRight(); break;
+                case 'ArrowUp':    currentPosition.moveUp();    cube.rotateUp();    break;
+                case 'ArrowDown':  currentPosition.moveDown();  cube.rotateDown();  break;
+            }
+
+            updateDisplay();
+        });
+
+        function updateDisplay() {
+            const currentIndex = currentPosition.getIndex();
+            const targetCell = document.getElementById(`cell-${currentIndex}`);
+            
+            // "1 higher" check: (Face - Grid) % 3 == 1
+            // Adding 3 before the final modulo handles negative results in JS
+            const faceMod = cube.faceBehind % 3;
+            const gridMod = currentIndex % 3;
+            const isOneHigher = (faceMod - gridMod + 3) % 3 === 1;
+
+            if (isOneHigher) {
+                lockedCells.add(currentIndex);
+            }
+
+            // 3. Render CURRENT cell appearance
+            if (lockedCells.has(currentIndex)) {
+                targetCell.style.backgroundColor = 'yellow';
+                targetCell.textContent = '0';
+            } else {
+                targetCell.style.backgroundColor = 'red';
+                targetCell.textContent = cube.faceBehind.toString();
+            }
+        }
+    </script>
+</body>
+</html> -->
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Rotated Modulo Game</title>
+    <style>
+        body {
+            background-color: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            height: 100vh;
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: white;
+        }
+
+        #ui-layer {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        #score-display {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        #gen-btn {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #444;
+            color: white;
+            border: 1px solid white;
+            transition: 0.3s;
+        }
+
+        #gen-btn:hover {
+            background-color: #666;
+        }
+
+        #grid-container {
+            display: grid;
+            grid-template-columns: repeat(10, 40px); 
+            grid-template-rows: repeat(10, 40px);
+            border: 2px solid white;
+        }
+
+        .cell {
+            width: 40px;
+            height: 40px;
+            border: 1px solid #222;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 14px;
+            background-color: black;
+        }
+
+        .target-cell {
+            border: 2px solid yellow !important;
+            color: yellow;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="ui-layer">
+        <div id="score-display">Score: <span id="score-val">0</span></div>
+        <button id="gen-btn" onclick="generateTarget()">Generate Target</button>
+    </div>
+
+    <div id="grid-container"></div>
+
+    <script>
+        class Position {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+            }
+            moveLeft()  { if (this.x > 0) this.x -= 1; }
+            moveRight() { if (this.x < 9) this.x += 1; }
+            moveUp()    { if (this.y > 0) this.y -= 1; }
+            moveDown()  { if (this.y < 9) this.y += 1; }
+            getIndex()  { return this.y * 10 + this.x; }
+        }
+
+        class Cube {
+            constructor() {
+                this.reset();
+            }
+            reset() {
+                this.faceLeft = 0; this.faceBehind = 1; this.faceRight = 2;
+                this.faceFront = 3; this.faceUp = 4; this.faceDown = 5;
+            }
+            rotateLeft() {
+                const temp = this.faceLeft;
+                this.faceLeft = this.faceFront; this.faceFront = this.faceRight;
+                this.faceRight = this.faceBehind; this.faceBehind = temp;
+            }
+            rotateRight() {
+                const temp = this.faceRight;
+                this.faceRight = this.faceFront; this.faceFront = this.faceLeft;
+                this.faceLeft = this.faceBehind; this.faceBehind = temp;
+            }
+            rotateUp() {
+                const temp = this.faceUp;
+                this.faceUp = this.faceFront; this.faceFront = this.faceDown;
+                this.faceDown = this.faceBehind; this.faceBehind = temp;
+            }
+            rotateDown() {
+                const temp = this.faceDown;
+                this.faceDown = this.faceFront; this.faceFront = this.faceUp;
+                this.faceUp = this.faceBehind; this.faceBehind = temp;
+            }
+        }
+
+        // Game State
+        let score = 0;
+        let targetIndex = null;
+        let targetNumber = null;
+        const currentPosition = new Position(0, 0);
+        const cube = new Cube();
+        const container = document.getElementById('grid-container');
+
+        // Create 100 cells
+        for (let i = 0; i < 100; i++) {
+            const cell = document.createElement('div');
+            cell.classList.add('cell');
+            cell.id = `cell-${i}`; 
+            container.appendChild(cell);
+        }
+
+        function generateTarget() {
+            // Clear previous target visuals
+            if (targetIndex !== null) {
+                const prev = document.getElementById(`cell-${targetIndex}`);
+                prev.classList.remove('target-cell');
+                prev.textContent = '';
+            }
+
+            // Generate new random target
+            targetIndex = Math.floor(Math.random() * 100);
+            targetNumber = Math.floor(Math.random() * 100);
+
+            const targetCell = document.getElementById(`cell-${targetIndex}`);
+            targetCell.classList.add('target-cell');
+            targetCell.textContent = targetNumber;
+        }
+
+        function checkGameLogic() {
+            if (targetIndex === null || currentPosition.getIndex() !== targetIndex) return;
+
+            const cubeVal = cube.faceBehind % 3;
+            const targetVal = targetNumber % 3;
+
+            // Difference in modulo 3
+            // (1 higher: result is 1) | (1 lower: result is 2 or -1)
+            const diff = (cubeVal - targetVal + 3) % 3;
+
+            if (diff === 1) {
+                score++;
+                alert(`Win! Cube(${cube.faceBehind}) vs Target(${targetNumber}). Score: ${score}`);
+            } else if (diff === 2) {
+                score--;
+                alert(`Lose! Cube(${cube.faceBehind}) vs Target(${targetNumber}). Score: ${score}`);
+            }
+
+            document.getElementById('score-val').textContent = score;
+            
+            // Reset target after encounter
+            const cell = document.getElementById(`cell-${targetIndex}`);
+            cell.classList.remove('target-cell');
+            cell.textContent = '';
+            targetIndex = null;
+        }
+
+        function updateDisplay() {
+            // Clean up all cells first (pitch black)
+            for (let i = 0; i < 100; i++) {
+                const cell = document.getElementById(`cell-${i}`);
+                cell.style.backgroundColor = 'black';
+                if (i !== targetIndex) cell.textContent = '';
+            }
+
+            // Draw player
+            const playerCell = document.getElementById(`cell-${currentPosition.getIndex()}`);
+            playerCell.style.backgroundColor = 'red';
+            playerCell.textContent = cube.faceBehind;
+
+            checkGameLogic();
+        }
+
+        document.addEventListener('keydown', (e) => {
+            switch (e.key) {
+                case 'ArrowLeft':  currentPosition.moveLeft();  cube.rotateLeft();  break;
+                case 'ArrowRight': currentPosition.moveRight(); cube.rotateRight(); break;
+                case 'ArrowUp':    currentPosition.moveUp();    cube.rotateUp();    break;
+                case 'ArrowDown':  currentPosition.moveDown();  cube.rotateDown();  break;
+                default: return;
+            }
+            updateDisplay();
+        });
+
+        // Initial draw
+        updateDisplay();
+    </script>
+</body>
+</html> -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Rotated Modulo Game - Path Restriction</title>
+    <style>
+        body {
+            background-color: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            height: 100vh;
+            margin: 0;
+            font-family: sans-serif;
+            color: white;
+        }
+
+        #ui-layer {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        #status-msg {
+            color: #ff4444;
+            height: 20px;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        #grid-container {
+            display: grid;
+            grid-template-columns: repeat(10, 40px); 
+            grid-template-rows: repeat(10, 40px);
+            border: 2px solid white;
+        }
+
+        .cell {
+            width: 40px;
+            height: 40px;
+            border: 1px solid #222;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 14px;
+        }
+
+        /* State Styles */
+        .visited { background-color: yellow !important; color: black; }
+        .target { border: 2px solid cyan !important; color: cyan; font-weight: bold; }
+        .player { background-color: red !important; color: white; z-index: 10; }
+    </style>
+</head>
+<body>
+
+    <div id="ui-layer">
+        <div id="score-display">Score: <span id="score-val">0</span></div>
+        <button id="gen-btn" onclick="generateTarget()">Generate Target</button>
+        <div id="status-msg"></div>
+    </div>
+
+    <div id="grid-container"></div>
+
+    <script>
+        class Position {
+            constructor(x, y) { this.x = x; this.y = y; }
+            copy() { return new Position(this.x, this.y); }
+            getIndex() { return this.y * 10 + this.x; }
+        }
+
+        class Cube {
+            constructor() { this.reset(); }
+            reset() {
+                this.faceLeft = 0; this.faceBehind = 1; this.faceRight = 2;
+                this.faceFront = 3; this.faceUp = 4; this.faceDown = 5;
+            }
+            // Create a simple data copy to revert state
+            getSnapshot() {
+                return { ...this };
+            }
+            restore(snapshot) {
+                Object.assign(this, snapshot);
+            }
+            rotateLeft() {
+                const temp = this.faceLeft;
+                this.faceLeft = this.faceFront; this.faceFront = this.faceRight;
+                this.faceRight = this.faceBehind; this.faceBehind = temp;
+            }
+            rotateRight() {
+                const temp = this.faceRight;
+                this.faceRight = this.faceFront; this.faceFront = this.faceLeft;
+                this.faceLeft = this.faceBehind; this.faceBehind = temp;
+            }
+            rotateUp() {
+                const temp = this.faceUp;
+                this.faceUp = this.faceFront; this.faceFront = this.faceDown;
+                this.faceDown = this.faceBehind; this.faceBehind = temp;
+            }
+            rotateDown() {
+                const temp = this.faceDown;
+                this.faceDown = this.faceFront; this.faceFront = this.faceUp;
+                this.faceUp = this.faceBehind; this.faceBehind = temp;
+            }
+        }
+
+        let score = 0;
+        let targetIndex = null;
+        let targetNumber = null;
+        let currentPosition = new Position(0, 0);
+        const cube = new Cube();
+        const visitedCells = new Set([0]); // Start cell is visited
+
+        // Build Grid
+        const container = document.getElementById('grid-container');
+        for (let i = 0; i < 100; i++) {
+            const cell = document.createElement('div');
+            cell.classList.add('cell');
+            cell.id = `cell-${i}`; 
+            container.appendChild(cell);
+        }
+
+        function generateTarget() {
+            targetIndex = Math.floor(Math.random() * 100);
+            targetNumber = Math.floor(Math.random() * 100);
+            visitedCells.clear();
+            updateDisplay();
+        }
+
+        function updateDisplay(errorMsg = "") {
+            document.getElementById('status-msg').textContent = errorMsg;
+            document.getElementById('score-val').textContent = score;
+
+            for (let i = 0; i < 100; i++) {
+                const cell = document.getElementById(`cell-${i}`);
+                cell.className = 'cell'; // Reset classes
+                cell.textContent = '';
+                cell.style.backgroundColor = 'black';
+
+                if (visitedCells.has(i)) cell.classList.add('visited');
+                if (i === targetIndex) {
+                    cell.classList.add('target');
+                    cell.textContent = targetNumber;
+                }
+            }
+
+            const pIdx = currentPosition.getIndex();
+            const playerCell = document.getElementById(`cell-${pIdx}`);
+            playerCell.classList.add('player');
+            playerCell.textContent = cube.faceBehind;
+        }
+
+        document.addEventListener('keydown', (e) => {
+            // 1. Save current state before moving
+            const oldPos = currentPosition.copy();
+            const cubeSnapshot = cube.getSnapshot();
+
+            // 2. Perform move
+            switch (e.key) {
+                case 'ArrowLeft':  currentPosition.x > 0 ? (currentPosition.x--, cube.rotateLeft()) : null; break;
+                case 'ArrowRight': currentPosition.x < 9 ? (currentPosition.x++, cube.rotateRight()) : null; break;
+                case 'ArrowUp':    currentPosition.y > 0 ? (currentPosition.y--, cube.rotateUp()) : null; break;
+                case 'ArrowDown':  currentPosition.y < 9 ? (currentPosition.y++, cube.rotateDown()) : null; break;
+                default: return;
+            }
+
+            const newIdx = currentPosition.getIndex();
+
+            // 3. Validation Logic
+            if (newIdx === oldPos.getIndex()) return; // No movement occurred (hit edge)
+
+            if (visitedCells.has(newIdx)) {
+                // Revert!
+                currentPosition = oldPos;
+                cube.restore(cubeSnapshot);
+                updateDisplay("Error: You cannot revisit a cell!");
+            } else {
+                // Valid move
+                visitedCells.add(newIdx);
+                
+                // Check Win/Loss if hitting target
+                if (newIdx === targetIndex) {
+                    const diff = (cube.faceBehind % 3 - targetNumber % 3 + 3) % 3;
+                    if (diff === 1) score++;
+                    else if (diff === 2) score--;
+                    targetIndex = null; // Clear target
+                }
+                updateDisplay();
+            }
+        });
+
+        updateDisplay();
+    </script>
+</body>
+</html>

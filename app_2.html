@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Number Memory 7x7</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; background-color: #f4f4f9; }
+        #game-container { display: inline-block; margin-top: 20px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .grid { display: grid; grid-template-columns: 40px repeat(7, 60px); gap: 5px; }
+        .cell { border: 1px solid #ccc; height: 50px; display: flex; align-items: center; justify-content: center; font-size: 1.2em; border-radius: 4px; }
+        .header-cell { font-weight: bold; background-color: #eee; }
+        .hidden { background-color: #333; color: #333; }
+        #controls, #input-area { margin: 20px; }
+        #stats { margin: 10px; font-weight: bold; }
+        .error { color: #d9534f; }
+        .success { color: #5cb85c; }
+    </style>
+</head>
+<body>
+
+    <h1>Memory 7x7</h1>
+    <div id="stats">
+        <span id="timer">Time: 120s</span> | 
+        <span id="chances">Chances Left: 5</span> | 
+        <span id="score-display">Score: 0</span>
+    </div>
+
+    <div id="game-container">
+        <div id="grid" class="grid"></div>
+    </div>
+
+    <div id="controls">
+        <button onclick="startGame()" id="startBtn">Start Game</button>
+    </div>
+
+    <div id="input-area" style="display:none;">
+        <input type="text" id="posInput" placeholder="Pos (A1)" style="width: 60px;">
+        <input type="number" id="numInput" placeholder="Num" style="width: 60px;">
+        <button onclick="evaluateAnswer()">Evaluate</button>
+        <p id="feedback"></p>
+    </div>
+
+    <script>
+        let gridData = {};
+        let solvedPositions = new Set();
+        const rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
+        const cols = [1, 2, 3, 4, 5, 6, 7];
+        let timer, timeLeft, chances, score;
+
+        function createGridStructure() {
+            const grid = document.getElementById('grid');
+            grid.innerHTML = '';
+            grid.appendChild(document.createElement('div'));
+            cols.forEach(c => {
+                let h = document.createElement('div');
+                h.className = 'cell header-cell';
+                h.innerText = c;
+                grid.appendChild(h);
+            });
+            rows.forEach(r => {
+                let h = document.createElement('div');
+                h.className = 'cell header-cell';
+                h.innerText = r;
+                grid.appendChild(h);
+                cols.forEach(c => {
+                    let cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.id = `cell-${r}${c}`;
+                    grid.appendChild(cell);
+                });
+            });
+        }
+
+        function startGame() {
+            createGridStructure();
+            gridData = {};
+            solvedPositions.clear();
+            timeLeft = 120;
+            chances = 5;
+            score = 0;
+            
+            updateStats();
+            document.getElementById('input-area').style.display = 'none';
+            document.getElementById('feedback').innerText = '';
+            document.getElementById('startBtn').disabled = true;
+            
+            for (let r of rows) {
+                for (let c of cols) {
+                    const num = Math.floor(Math.random() * 100);
+                    gridData[`${r}${c}`] = num;
+                    document.getElementById(`cell-${r}${c}`).innerText = num;
+                    document.getElementById(`cell-${r}${c}`).classList.remove('hidden');
+                }
+            }
+
+            clearInterval(timer);
+            timer = setInterval(() => {
+                timeLeft--;
+                document.getElementById('timer').innerText = `Time: ${timeLeft}s`;
+                if (timeLeft <= 0) endGame("Time's up!");
+            }, 1000);
+        }
+
+        function updateStats() {
+            document.getElementById('chances').innerText = `Chances Left: ${chances}`;
+            document.getElementById('score-display').innerText = `Score: ${score}`;
+        }
+
+        function hideGrid() {
+            clearInterval(timer);
+            for (let key in gridData) {
+                document.getElementById(`cell-${key}`).innerText = '';
+                document.getElementById(`cell-${key}`).classList.add('hidden');
+            }
+            document.getElementById('input-area').style.display = 'block';
+        }
+
+        // Force hide manually for testing or wait for timer
+        setTimeout(hideGrid, 120000); 
+
+        function evaluateAnswer() {
+            const pos = document.getElementById('posInput').value.toUpperCase();
+            const num = parseInt(document.getElementById('numInput').value);
+            const feedback = document.getElementById('feedback');
+
+            if (!gridData[pos] && gridData[pos] !== 0) {
+                feedback.innerText = "Invalid position!";
+                return;
+            }
+
+            if (solvedPositions.has(pos)) {
+                feedback.innerText = "Position already solved!";
+                return;
+            }
+
+            if (gridData[pos] === num) {
+                score++;
+                solvedPositions.add(pos);
+                feedback.innerText = `Correct! ${pos} is ${num}`;
+                feedback.className = 'success';
+                document.getElementById(`cell-${pos}`).innerText = num;
+                document.getElementById(`cell-${pos}`).classList.remove('hidden');
+                updateStats();
+                if (score === 49) endGame("Perfect! You memorized everything!");
+            } else {
+                chances--;
+                feedback.innerText = `Incorrect! ${chances} chances left.`;
+                feedback.className = 'error';
+                updateStats();
+                if (chances <= 0) endGame("Game Over!");
+            }
+            
+            document.getElementById('posInput').value = '';
+            document.getElementById('numInput').value = '';
+        }
+
+        function endGame(message) {
+            clearInterval(timer);
+            document.getElementById('input-area').style.display = 'none';
+            document.getElementById('startBtn').disabled = false;
+            alert(`${message}\nYour Final Score: ${score}/49`);
+        }
+        
+        createGridStructure();
+    </script>
+</body>
+</html>
