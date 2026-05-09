@@ -3,108 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>10x10 Interactive Grid</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f0f0f0;
-            margin: 0;
-            padding: 20px;
-            flex-direction: column;
-            align-items: center;
-        }
-        h1 {
-            color: #333;
-            margin-bottom: 20px;
-        }
-        p {
-            display: inline-block;
-            font-size: 24px;
-            margin: 0 10px;
-        }
-        input {
-            font-size: 24px;
-            padding: 5px;
-            width: 100px;
-        }
-        #game {
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            display: inline-block;
-        }
-        #score {
-            font-size: 24px;
-            color: #007BFF;
-        }
-        #timer {
-            font-size: 18px;
-            color: #FF0000;
-            margin-top: 10px;
-            display: block;
-        }
-        #button-container {
-            margin-top: 20px;
-        }
+        body { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background: #f8f9fa; font-family: sans-serif; }
+        #grid { display: grid; grid-template-columns: repeat(10, 40px); gap: 4px; padding: 10px; background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .cell { width: 40px; height: 40px; background: #eee; display: flex; justify-content: center; align-items: center; cursor: pointer; border-radius: 4px; font-weight: bold; transition: 0.2s; border: 1px solid #ddd; }
+        .cell:hover { filter: brightness(0.9); }
+        .active { background: #007bff; color: white; border-color: #0056b3; }
+        .linked { background: #ffc107; color: #333; }
     </style>
 </head>
 <body>
-    <h1>Welcome to the App</h1>
-    <div>Score: <span id="score">0</span></div>
-    <time id="timer">Time Left: 3:00</time>
-    <div id="game">
-        <p id="number-1"></p><p>+</p><p id="number-2"></p><p>=</p><input type="text" id="result" placeholder="Enter result here">
-    </div>
-    <space></space>
-    <div id="button-container"><button id="reset-btn">Reset Game</button></div>
+
+    <h3>Click Box 0 to control Box 10</h3>
+    <div id="grid"></div>
+
     <script>
-        const num1Element = document.getElementById('number-1');
-        const num2Element = document.getElementById('number-2');
-        const resultInput = document.getElementById('result');
-        const scoreElement = document.getElementById('score');
-        const timerElement = document.getElementById('timer');
+        document.body.style.cursor = 'default';
+        const boxContents = Array.from({ length: 100 }, (_, i) => i);
+        const boxActives = Array(100).fill(false);
+        const grid = document.getElementById('grid');
+        
+        // 1. Build the grid
+        for (let i = 0; i < 100; i++) {
+            const cell = document.createElement('div');
+            cell.classList.add('cell');
+            cell.id = `cell-${i}`; // Assign unique ID
+            cell.textContent = boxContents[i];   // Showing ID number for easy reference
+            
+            cell.addEventListener('click', () => handleBoxClick(i));
+            grid.appendChild(cell);
+        }
 
-        let score = 0;
-        let timeLimit = 180; 
+        // 2. Logic Function
+        function handleBoxClick(index) {
+            boxActives[index] = !boxActives[index];
+            checkDependencies(index);
 
-        // Initialize game with random numbers
-        num1Element.textContent = Math.floor(Math.random() * 50);
-        num2Element.textContent = Math.floor(Math.random() * 50);
+            for(let i = 0; i < 100; i++) {
+                const cell = document.getElementById(`cell-${i}`);
+                if (boxActives[i]) {
+                    cell.classList.add('active');
+                } else {
+                    cell.classList.remove('active');
+                }
+            }s
+        }
 
-        // Timer logic
-        const timer = setInterval(() => {
-            timeLimit--;
-            const minutes = Math.floor(timeLimit / 60);
-            const seconds = timeLimit % 60;
-            timerElement.textContent = `Time Left: ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-            if (timeLimit <= 0) {
-                clearInterval(timer);
-                alert('Game Over! Your final score is: ' + score);
-                location.reload();
+        function checkDependencies(clickedIndex) {
+            for(let i = 0; i < 100; i++) {
+                if(i % clickedIndex == 0 && clickedIndex != 1) {
+                    boxActives[i] = !boxActives[i];
+                }
             }
-        }, 1000);
-
-        // Game logic
-        resultInput.addEventListener('input', () => {
-            const n1 = parseInt(num1Element.textContent);
-            const n2 = parseInt(num2Element.textContent);
-            const userResult = parseInt(resultInput.value);
-
-            if (userResult === n1 + n2) {
-                score++;
-                scoreElement.textContent = score;
-                resultInput.value = ''; // Clear input
-                
-                // Generate new numbers
-                num1Element.textContent = Math.floor(Math.random() * 50);
-                num2Element.textContent = Math.floor(Math.random() * 50);
-            }
-        });
-
-        // Reset Button logic
-        document.getElementById('reset-btn').addEventListener('click', () => location.reload());
-
+        }
     </script>
 </body>
 </html>
